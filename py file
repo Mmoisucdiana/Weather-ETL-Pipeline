@@ -1,0 +1,67 @@
+import os
+import pandas as pd
+from datetime import datetime
+import os.path
+import requests
+
+
+def extract_weather_data(city, api_key):
+    url = f'http://api.weatherapi.com/v1/current.json?key={api_key}&q={city}&aqi=no'
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Eroare la extragere: {response.status_code} - {response.text}")
+
+
+# Exemplu de utilizare
+city = "Iasi"
+api_key = ""  # api_key
+weather_data = extract_weather_data(city, api_key)
+print(weather_data)
+
+
+def transform_weather_data(raw_data):
+    data = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "location": raw_data["location"]["name"],
+        "region": raw_data["location"]["region"],
+        "country": raw_data["location"]["country"],
+        "temperature_c": raw_data["current"]["temp_c"],
+        "humidity": raw_data["current"]["humidity"],
+        "condition": raw_data["current"]["condition"]["text"],
+        "last_updated": raw_data["current"]["last_updated"]
+    }
+    df = pd.DataFrame([data])
+    return df
+
+
+def load_to_csv(df, file_name="weather_data.csv"):
+    if os.path.isfile(file_name):
+        existing_df = pd.read_csv(file_name)
+
+        duplicate = (
+                (existing_df["location"] == df["location"].iloc[0]) &
+                (existing_df["last_updated"] == df["last_updated"].iloc[0])
+        ).any()
+
+        if duplicate:
+            print("Înregistrarea există deja. Nu a fost adăugată.")
+            return
+
+        df.to_csv(file_name, mode="a", index=False, header=False)
+    else:
+
+        df.to_csv(file_name, mode="w", index=False, header=True)
+
+    print(f"Datele au fost adăugate în {file_name}")
+
+
+if __name__ == "__main__":
+    API_KEY = "api_key"  ###### add api_key
+    CITY = "Iasi"
+
+    raw_data = extract_weather_data(CITY, API_KEY)
+    weather_df = transform_weather_data(raw_data)
+    load_to_csv(weather_df)
+
