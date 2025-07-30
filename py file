@@ -3,7 +3,9 @@ import pandas as pd
 from datetime import datetime
 import os.path
 import requests
-
+import schedule
+import time
+from datetime import datetime
 
 def extract_weather_data(city, api_key):
     url = f'http://api.weatherapi.com/v1/current.json?key={api_key}&q={city}&aqi=no'
@@ -64,4 +66,33 @@ if __name__ == "__main__":
     raw_data = extract_weather_data(CITY, API_KEY)
     weather_df = transform_weather_data(raw_data)
     load_to_csv(weather_df)
+
+
+
+#bonus 
+Python script that automates weather data extraction from a public API and stores it in a CSV file at three scheduled times daily.
+Implements a complete ETL pipeline and uses the schedule library to manage recurring jobs. 
+Ideal for building a weather monitoring tool or integrating into dashboards and alerting systems.
+
+
+def job():
+    print(f'Rules job la {datetime.now()}')
+    raw_data=extract_weather_data(CITY,API_KEY)
+    df=transform_weather_data(raw_data)
+    load_to_csv(df)
+
+
+schedule.every().day.at("08:00").do(job)
+schedule.every().day.at("14:00").do(job)
+schedule.every().day.at("20:00").do(job)
+
+print("Weather scheduler a fost pornit..")
+while True:
+    schedule.run_pending()
+    time.sleep(60)
+
+
+
+
+
 
